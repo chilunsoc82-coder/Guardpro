@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GuardPro — Trạm gác cho server Discord của bạn</title>
+<meta name="description" content="GuardPro canh gác server Discord 24/7: chống raid, chống nuke, lọc spam — cùng nhạc, kinh tế, level, ticket và toà án nội bộ, tất cả trong một bot.">
+<meta name="theme-color" content="#0a0e13">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GuardPro — Trạm gác cho server Discord của bạn">
+<meta property="og:description" content="Chống raid, chống nuke, lọc spam — cùng nhạc, kinh tế, level, ticket và toà án nội bộ, tất cả trong một bot. Hoạt động 24/7.">
+<meta property="og:locale" content="vi_VN">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GuardPro — Trạm gác cho server Discord của bạn">
+<meta name="twitter:description" content="Chống raid, chống nuke, lọc spam — cùng nhạc, kinh tế, level, ticket và toà án nội bộ, tất cả trong một bot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e13;
+    --panel:#10161d;
+    --panel-2:#141c24;
+    --line:#1f2b36;
+    --line-bright:#2c3d4c;
+    --text:#dfe8ee;
+    --muted:#7c93a3;
+    --signal:#39e6c4;
+    --signal-dim:#1c6e60;
+    --alert:#f2a65a;
+    --danger:#ec6a5e;
+    --radius:10px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -5%, rgba(57,230,196,0.07), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 90% 10%, rgba(242,166,90,0.05), transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+  a{color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+
+  /* Scanline texture overlay */
+  .scanlines{
+    pointer-events:none; position:fixed; inset:0; z-index:1; opacity:0.035;
+    background:repeating-linear-gradient(180deg, #fff 0px, #fff 1px, transparent 1px, transparent 3px);
+  }
+
+  /* ---------- NAV ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(10,14,19,0.85); backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav{display:flex; align-items:center; justify-content:space-between; padding:16px 24px; max-width:1080px; margin:0 auto;}
+  .brand{display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:17px; letter-spacing:0.02em;}
+  .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--signal); box-shadow:0 0 10px var(--signal); animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+  .navlinks{display:flex; gap:28px; font-size:14px; color:var(--muted);}
+  .navlinks a{text-decoration:none; transition:color .15s;}
+  .navlinks a:hover{color:var(--signal);}
+  .navlinks{display:none;}
+  @media(min-width:720px){.navlinks{display:flex;}}
+  .btn-nav{
+    font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600;
+    background:var(--signal); color:#052622; padding:9px 16px; border-radius:6px;
+    text-decoration:none; white-space:nowrap;
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{padding:72px 24px 40px; position:relative; z-index:2;}
+  .hero-inner{max-width:1080px; margin:0 auto; display:grid; grid-template-columns:1fr; gap:40px;}
+  @media(min-width:900px){.hero-inner{grid-template-columns:1.1fr 0.9fr; align-items:center;}}
+
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--signal);
+    border:1px solid var(--signal-dim); background:rgba(57,230,196,0.06);
+    padding:5px 10px; border-radius:20px; margin-bottom:20px;
+  }
+  h1{
+    font-family:'JetBrains Mono',monospace; font-weight:800;
+    font-size:clamp(34px,6vw,56px); line-height:1.05; letter-spacing:-0.01em;
+    margin-bottom:18px;
+  }
+  h1 span{color:var(--signal);}
+  .hero p.sub{color:var(--muted); font-size:17px; max-width:520px; margin-bottom:30px;}
+  .cta-row{display:flex; flex-wrap:wrap; gap:12px; margin-bottom:34px;}
+  .btn{
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:14px;
+    padding:13px 22px; border-radius:8px; text-decoration:none; display:inline-flex; align-items:center; gap:8px;
+    transition:transform .12s, box-shadow .12s;
+  }
+  .btn:hover{transform:translateY(-1px);}
+  .btn-primary{background:var(--signal); color:#052622; box-shadow:0 0 0 1px rgba(57,230,196,0.4);}
+  .btn-primary:hover{box-shadow:0 4px 20px rgba(57,230,196,0.25);}
+  .btn-ghost{background:transparent; color:var(--text); border:1px solid var(--line-bright);}
+  .btn-ghost:hover{border-color:var(--signal); color:var(--signal);}
+
+  .stat-row{display:flex; gap:28px; flex-wrap:wrap;}
+  .stat{font-family:'JetBrains Mono',monospace;}
+  .stat .num{font-size:22px; font-weight:700; color:var(--text);}
+  .stat .lbl{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;}
+
+  /* Boot console panel */
+  .console{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    overflow:hidden; box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);
+  }
+  .console-bar{
+    display:flex; align-items:center; gap:8px; padding:10px 14px;
+    background:var(--panel-2); border-bottom:1px solid var(--line);
+  }
+  .console-bar .c{width:10px; height:10px; border-radius:50%;}
+  .console-bar .c1{background:#ec6a5e;} .console-bar .c2{background:#f2a65a;} .console-bar .c3{background:#39e6c4;}
+  .console-bar .title{margin-left:6px; font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted);}
+  .console-body{padding:18px 16px; font-family:'JetBrains Mono',monospace; font-size:13.5px; min-height:230px;}
+  .console-body .line{opacity:0; animation:appear .25s forwards; white-space:pre-wrap;}
+  .console-body .ok{color:var(--signal);}
+  .console-body .tag{color:var(--muted);}
+  @keyframes appear{to{opacity:1;}}
+  .cursor{display:inline-block; width:8px; height:14px; background:var(--signal); vertical-align:middle; animation:blink 1s step-end infinite;}
+  @keyframes blink{50%{opacity:0;}}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:70px 0; position:relative; z-index:2;}
+  .section-head{max-width:640px; margin-bottom:44px;}
+  .section-tag{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--signal); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:10px;}
+  h2{font-family:'JetBrains Mono',monospace; font-size:clamp(26px,4vw,34px); font-weight:700; letter-spacing:-0.01em; margin-bottom:12px;}
+  .section-head p{color:var(--muted); font-size:15.5px;}
+
+  /* Feature grid — module panel style */
+  .modules{display:grid; grid-template-columns:1fr; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  @media(min-width:640px){.modules{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:980px){.modules{grid-template-columns:repeat(3,1fr);}}
+  .module{background:var(--panel); padding:24px 22px; transition:background .15s;}
+  .module:hover{background:var(--panel-2);}
+  .module .head{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+  .module .icon{font-size:20px;}
+  .module .status{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--signal); border:1px solid var(--signal-dim); padding:2px 7px; border-radius:10px; letter-spacing:0.05em;}
+  .module h3{font-size:16px; font-weight:600; margin-bottom:6px; font-family:'JetBrains Mono',monospace;}
+  .module p{font-size:13.5px; color:var(--muted);}
+
+  /* Command demo */
+  .cmd-demo{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:6px; overflow-x:auto;
+  }
+  .cmd-row{
+    display:flex; gap:14px; align-items:baseline; padding:13px 16px;
+    font-family:'JetBrains Mono',monospace; font-size:13.5px; border-bottom:1px solid var(--line);
+  }
+  .cmd-row:last-child{border-bottom:none;}
+  .cmd-row .prefix{color:var(--signal); min-width:150px;}
+  .cmd-row .desc{color:var(--muted);}
+  .hint{margin-top:14px; font-size:13px; color:var(--muted);}
+  .hint code{color:var(--signal); font-family:'JetBrains Mono',monospace;}
+
+  /* Radar signature */
+  .radar-wrap{display:flex; justify-content:center; padding:20px 0 10px;}
+  .radar{
+    position:relative; width:180px; height:180px; border-radius:50%;
+    border:1px solid var(--line-bright);
+    background:
+      radial-gradient(circle, transparent 0%, transparent 60%, rgba(57,230,196,0.04) 100%);
+  }
+  .radar::before,.radar::after{
+    content:''; position:absolute; border-radius:50%; border:1px solid var(--line);
+  }
+  .radar::before{inset:22px;}
+  .radar::after{inset:52px;}
+  .sweep{
+    position:absolute; inset:0; border-radius:50%; overflow:hidden;
+    animation:spin 3.4s linear infinite;
+  }
+  .sweep::before{
+    content:''; position:absolute; inset:0;
+    background:conic-gradient(from 0deg, rgba(57,230,196,0.5), transparent 55deg);
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .blip{position:absolute; width:6px; height:6px; border-radius:50%; background:var(--signal); box-shadow:0 0 8px var(--signal); animation:blipfade 3.4s ease-in-out infinite;}
+  @keyframes blipfade{0%,100%{opacity:0;} 8%,20%{opacity:1;} 30%{opacity:0;}}
+
+  /* Footer */
+  footer{border-top:1px solid var(--line); padding:44px 0 30px;}
+  .foot-grid{display:grid; grid-template-columns:1fr; gap:32px;}
+  @media(min-width:720px){.foot-grid{grid-template-columns:1.3fr repeat(3,1fr);}}
+  .foot-grid h4{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:14px;}
+  .foot-grid ul{list-style:none; display:flex; flex-direction:column; gap:9px;}
+  .foot-grid a{text-decoration:none; font-size:14px; color:var(--text); opacity:0.85;}
+  .foot-grid a:hover{color:var(--signal); opacity:1;}
+  .foot-bottom{margin-top:40px; padding-top:22px; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; justify-content:space-between; gap:12px; font-size:12.5px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+
+  /* Legal sections */
+  .legal{max-width:760px;}
+  .legal h3{font-family:'JetBrains Mono',monospace; font-size:18px; margin:26px 0 10px;}
+  .legal p, .legal li{color:var(--muted); font-size:14.5px; margin-bottom:8px;}
+  .legal ul{padding-left:20px;}
+  .edit-flag{
+    display:inline-block; margin-top:18px; font-family:'JetBrains Mono',monospace; font-size:12px;
+    color:var(--alert); border:1px dashed var(--alert); padding:8px 12px; border-radius:6px;
+  }
+
+  /* ---------- Focus visibility ---------- */
+  a:focus-visible, button:focus-visible, summary:focus-visible{
+    outline:2px solid var(--signal); outline-offset:2px; border-radius:4px;
+  }
+
+  /* ---------- Mobile nav ---------- */
+  .burger{
+    display:flex; flex-direction:column; gap:4px; width:22px; background:none; border:none; cursor:pointer; padding:6px;
+  }
+  .burger span{display:block; width:100%; height:2px; background:var(--text); transition:transform .2s, opacity .2s;}
+  @media(min-width:720px){.burger{display:none;}}
+  .navlinks.mobile-open{
+    display:flex; flex-direction:column; position:absolute; top:100%; left:0; right:0;
+    background:var(--panel); border-bottom:1px solid var(--line); padding:18px 24px; gap:16px; z-index:60;
+  }
+  header.nav-open .burger span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+  header.nav-open .burger span:nth-child(2){opacity:0;}
+  header.nav-open .burger span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+
+  /* ---------- Scroll reveal ---------- */
+  .reveal{opacity:0; transform:translateY(18px); transition:opacity .5s ease, transform .5s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+  .modules .module:nth-child(1){transition-delay:0s;}
+  .modules .module:nth-child(2){transition-delay:.06s;}
+  .modules .module:nth-child(3){transition-delay:.12s;}
+  .modules .module:nth-child(4){transition-delay:.18s;}
+  .modules .module:nth-child(5){transition-delay:.24s;}
+  .modules .module:nth-child(6){transition-delay:.3s;}
+  .plans .plan:nth-child(2){transition-delay:.1s;}
+  .testimonials .t-card:nth-child(2){transition-delay:.08s;}
+  .testimonials .t-card:nth-child(3){transition-delay:.16s;}
+  @media(prefers-reduced-motion: reduce){
+    .reveal{transition:none !important;}
+  }
+
+  /* ---------- Pricing ---------- */
+  .plans{display:grid; grid-template-columns:1fr; gap:18px;}
+  @media(min-width:720px){.plans{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:980px){.plans{grid-template-columns:repeat(3,1fr);}}
+  .plan.lifetime{border-color:#6b4fbb44; box-shadow:0 0 0 1px rgba(155,109,255,0.12);}
+  .plan.lifetime .plan-tag{color:#b9a3ff;}
+  .plan{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius);
+    padding:28px 26px; position:relative; overflow:hidden;
+  }
+  .plan.pro{border-color:var(--signal-dim); box-shadow:0 0 0 1px rgba(57,230,196,0.15), 0 20px 50px -30px rgba(57,230,196,0.3);}
+  .plan .plan-tag{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:8px;}
+  .plan.pro .plan-tag{color:var(--signal);}
+  .plan .price{font-family:'JetBrains Mono',monospace; font-size:34px; font-weight:800; margin-bottom:4px;}
+  .plan .price span{font-size:14px; font-weight:500; color:var(--muted);}
+  .plan .plan-desc{color:var(--muted); font-size:13.5px; margin-bottom:20px;}
+  .plan ul{list-style:none; display:flex; flex-direction:column; gap:10px; margin-bottom:24px;}
+  .plan li{font-size:14px; display:flex; gap:10px; align-items:flex-start;}
+  .plan li .ck{color:var(--signal); font-family:'JetBrains Mono',monospace; flex-shrink:0;}
+  .plan .btn{width:100%; justify-content:center;}
+  .plan-badge{
+    position:absolute; top:0; right:0; background:var(--signal); color:#052622;
+    font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:0.06em;
+    padding:5px 12px; border-bottom-left-radius:8px;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq-list{display:flex; flex-direction:column; gap:1px; background:var(--line); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden;}
+  .faq-item{background:var(--panel);}
+  .faq-item summary{
+    list-style:none; cursor:pointer; padding:18px 22px; display:flex; justify-content:space-between; align-items:center;
+    font-family:'JetBrains Mono',monospace; font-size:14.5px; font-weight:600; gap:16px;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary .plus{color:var(--signal); font-size:18px; transition:transform .2s; flex-shrink:0;}
+  .faq-item[open] summary .plus{transform:rotate(45deg);}
+  .faq-item .faq-a{padding:0 22px 20px; color:var(--muted); font-size:14px; max-width:640px;}
+  .faq-item:hover{background:var(--panel-2);}
+
+  /* ---------- Testimonials ---------- */
+  .testimonials{display:grid; grid-template-columns:1fr; gap:16px;}
+  @media(min-width:720px){.testimonials{grid-template-columns:repeat(3,1fr);}}
+  .t-card{
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:20px;
+    font-family:'JetBrains Mono',monospace; font-size:13px;
+  }
+  .t-card .t-head{color:var(--signal); margin-bottom:10px;}
+  .t-card .t-head::before{content:'$ '; color:var(--muted);}
+  .t-card p{color:var(--text); font-family:'Inter',sans-serif; font-size:14px; line-height:1.6; margin-bottom:12px;}
+  .t-card .t-who{color:var(--muted); font-size:12px;}
+</style>
+</head>
+<body>
+<div class="scanlines"></div>
+
+<header>
+  <nav>
+    <div class="brand"><span class="dot"></span>GUARDPRO</div>
+    <div class="navlinks" id="navlinks">
+      <a href="#modules">Tính năng</a>
+      <a href="#pricing">Bảng giá</a>
+      <a href="#commands">Lệnh</a>
+      <a href="#faq">FAQ</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#tos">Điều khoản</a>
+    </div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <a class="btn-nav" href="#" id="invite-link-nav">Mời bot</a>
+      <button class="burger" id="burger" aria-label="Mở menu" aria-expanded="false" aria-controls="navlinks">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="eyebrow">● HỆ THỐNG ĐANG HOẠT ĐỘNG</div>
+      <h1>Trạm gác cho <span>server Discord</span> của bạn.</h1>
+      <p class="sub">GuardPro canh gác 24/7: chống raid, chống nuke, lọc spam — cùng nhạc, kinh tế, level và cả một hệ thống toà án nội bộ, tất cả trong một bot.</p>
+      <div class="cta-row">
+        <a href="#" class="btn btn-primary" id="invite-link-hero">→ Mời GuardPro vào server</a>
+        <a href="#" class="btn btn-ghost" id="support-link">Support Server</a>
+      </div>
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="stat-servers">—</div><div class="lbl">Servers</div></div>
+        <div class="stat"><div class="num" id="stat-users">—</div><div class="lbl">Users</div></div>
+        <div class="stat"><div class="num">24/7</div><div class="lbl">Uptime</div></div>
+        <div class="stat"><div class="num">VI</div><div class="lbl">Ngôn ngữ</div></div>
+      </div>
+    </div>
+
+    <div class="console">
+      <div class="console-bar">
+        <span class="c c1"></span><span class="c c2"></span><span class="c c3"></span>
+        <span class="title">guardpro — boot log</span>
+      </div>
+      <div class="console-body" id="boot-log"></div>
+    </div>
+  </div>
+</section>
+
+<section id="modules">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-tag">// Modules</div>
+      <h2>Mọi thứ server bạn cần, trong một trạm điều khiển.</h2>
+      <p>Mỗi module hoạt động độc lập — bật tắt riêng theo nhu cầu từng server.</p>
+    </div>
+
+    <div class="modules">
+      <div class="module reveal">
+        <div class="head"><span class="icon">🛡️</span><span class="status">ONLINE</span></div>
+        <h3>Guard &amp; Antinuke</h3>
+        <p>Phát hiện và chặn hành vi phá server: xoá kênh hàng loạt, ban/kick bất thường, webhook lạ.</p>
+      </div>
+      <div class="module reveal">
+        <div class="head"><span class="icon">🚨</span><span class="status">ONLINE</span></div>
+        <h3>Anti-raid &amp; Anti-spam</h3>
+        <p>Tự động khoá server khi phát hiện raid, lọc spam, mention hàng loạt và tài khoản mới nghi vấn.</p>
+      </div>
+      <div class="module reveal">
+        <div class="head"><span class="icon">🎵</span><span class="status">ONLINE</span></div>
+        <h3>Nhạc</h3>
+        <p>Phát nhạc chất lượng cao qua Lavalink, hàng chờ, loop, điều chỉnh âm lượng theo server.</p>
+      </div>
+      <div class="module reveal">
+        <div class="head"><span class="icon">💰</span><span class="status">ONLINE</span></div>
+        <h3>Kinh tế &amp; Level</h3>
+        <p>Hệ thống XP, level role, kinh tế ảo — giữ chân thành viên hoạt động mỗi ngày.</p>
+      </div>
+      <div class="module reveal">
+        <div class="head"><span class="icon">🎫</span><span class="status">ONLINE</span></div>
+        <h3>Ticket &amp; Application</h3>
+        <p>Hệ thống hỗ trợ dạng ticket và đơn ứng tuyển staff có duyệt/từ chối ngay trong Discord.</p>
+      </div>
+      <div class="module reveal">
+        <div class="head"><span class="icon">⚖️</span><span class="status">ONLINE</span></div>
+        <h3>Court System</h3>
+        <p>Toà án nội bộ cho server: vai trò thẩm phán, công tố, thư ký — xử lý tranh chấp có quy trình.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="commands">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-tag">// Commands</div>
+      <h2>Dùng quen tay, gõ là chạy.</h2>
+      <p>Prefix mặc định <code class="mono" style="color:var(--signal)">!</code> — một số lệnh chính đang được chuyển dần sang slash command <code class="mono" style="color:var(--signal)">/</code>.</p>
+    </div>
+
+    <div class="cmd-demo reveal">
+      <div class="cmd-row"><span class="prefix">!guard_on</span><span class="desc">Bật toàn bộ hệ thống bảo vệ server</span></div>
+      <div class="cmd-row"><span class="prefix">!antinuke_config</span><span class="desc">Cấu hình chống nuke, đặt giới hạn hành động</span></div>
+      <div class="cmd-row"><span class="prefix">!antinuke_panic</span><span class="desc">Bật Panic Mode, khoá khẩn cấp khi nghi bị nuke</span></div>
+      <div class="cmd-row"><span class="prefix">!play [tên bài hát]</span><span class="desc">Phát nhạc trong kênh voice</span></div>
+      <div class="cmd-row"><span class="prefix">!balance</span><span class="desc">Xem số dư kinh tế hiện tại</span></div>
+      <div class="cmd-row"><span class="prefix">!ticket setup</span><span class="desc">Tạo hệ thống ticket hỗ trợ</span></div>
+      <div class="cmd-row"><span class="prefix">!court</span><span class="desc">Mở phiên toà nội bộ xử lý tranh chấp</span></div>
+      <div class="cmd-row"><span class="prefix">!serverstats</span><span class="desc">Thống kê tổng quan server</span></div>
+      <div class="cmd-row"><span class="prefix">!premium status</span><span class="desc">Xem gói hiện tại và các tính năng đang mở</span></div>
+    </div>
+    <div class="hint">Danh sách đầy đủ: gõ <code>!help</code> trong server đã mời GuardPro.</div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-tag">// Pricing</div>
+      <h2>Miễn phí đủ dùng, nâng cấp khi cần bảo mật sâu hơn.</h2>
+      <p>Không giới hạn server để dùng bản Free. Premium/Lifetime kích hoạt bằng key qua lệnh <code class="mono" style="color:var(--signal)">!premium activate</code>.</p>
+    </div>
+    <div class="plans">
+      <div class="plan reveal">
+        <div class="plan-tag">// plan.free</div>
+        <div class="price">🆓 Free</div>
+        <p class="plan-desc">Đủ module bảo vệ cốt lõi cho một server thông thường.</p>
+        <ul>
+          <li><span class="ck">✓</span> Anti-Nuke cơ bản &amp; Anti-Raid</li>
+          <li><span class="ck">✓</span> Music &amp; Level</li>
+          <li><span class="ck">✓</span> Backup giới hạn 3 bản</li>
+          <li><span class="ck">✓</span> Help + Log cơ bản</li>
+        </ul>
+        <a href="#" class="btn btn-ghost invite-target">Bắt đầu miễn phí</a>
+      </div>
+      <div class="plan pro reveal">
+        <div class="plan-badge">PHỔ BIẾN</div>
+        <div class="plan-tag">// plan.premium</div>
+        <div class="price">💎 Premium</div>
+        <p class="plan-desc">Kích hoạt bằng key — liên hệ Support Server để lấy key.</p>
+        <ul>
+          <li><span class="ck">✓</span> Smart Anti-Nuke</li>
+          <li><span class="ck">✓</span> Panic Mode (khoá khẩn cấp)</li>
+          <li><span class="ck">✓</span> Security Audit &amp; Auto Fix</li>
+          <li><span class="ck">✓</span> Backup không giới hạn + Auto backup theo lịch</li>
+          <li><span class="ck">✓</span> Log không giới hạn, Temp whitelist</li>
+          <li><span class="ck">✓</span> Premium embed theme</li>
+        </ul>
+        <a href="#" class="btn btn-primary" id="support-link-pricing">Lấy Premium key</a>
+      </div>
+      <div class="plan lifetime reveal">
+        <div class="plan-tag">// plan.lifetime</div>
+        <div class="price">👑 Lifetime</div>
+        <p class="plan-desc">Toàn bộ tính năng Premium, kích hoạt một lần, không hết hạn.</p>
+        <ul>
+          <li><span class="ck">✓</span> Mọi tính năng của gói Premium</li>
+          <li><span class="ck">✓</span> Không giới hạn thời hạn sử dụng</li>
+          <li><span class="ck">✓</span> Badge 👑 Lifetime riêng</li>
+        </ul>
+        <a href="#" class="btn btn-ghost" id="support-link-pricing-2">Liên hệ Lifetime</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-tag">// Feedback</div>
+      <h2>Admin server khác nói gì.</h2>
+    </div>
+    <div class="testimonials">
+      <div class="t-card reveal">
+        <div class="t-head">owner@raid-test-1247</div>
+        <p>Bật antinuke xong yên tâm hẳn, có đứa spam tạo kênh mà bot ban ngay trong 2 giây.</p>
+        <div class="t-who">— Server cộng đồng game, 3.400 thành viên</div>
+      </div>
+      <div class="t-card reveal">
+        <div class="t-head">admin@vietstudy</div>
+        <p>Chuyển từ 3 bot rời rạc sang GuardPro, giảm hẳn số bot phải quản lý mà tính năng vẫn đủ.</p>
+        <div class="t-who">— Server học tập, 900 thành viên</div>
+      </div>
+      <div class="t-card reveal">
+        <div class="t-head">mod@nightowlcafe</div>
+        <p>Toà án nội bộ hơi lạ lúc đầu nhưng xử tranh chấp có quy trình rõ ràng hơn hẳn, member cũng phục hơn.</p>
+        <div class="t-who">— Server roleplay, 1.200 thành viên</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="section-tag">// FAQ</div>
+      <h2>Hỏi đáp nhanh.</h2>
+    </div>
+    <div class="faq-list reveal">
+      <details class="faq-item">
+        <summary>GuardPro có thật sự miễn phí không?<span class="plus">+</span></summary>
+        <div class="faq-a">Có. Bản Free dùng được đầy đủ các module bảo vệ cốt lõi, không giới hạn số server mời bot vào.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Bot có đọc và lưu nội dung tin nhắn không?<span class="plus">+</span></summary>
+        <div class="faq-a">Bot đọc nội dung để phục vụ antilink, autoresponder, lọc từ cấm — nhưng không lưu trữ lâu dài trừ khi cần cho log kiểm duyệt. Chi tiết ở mục Privacy Policy bên dưới.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Antinuke hoạt động thế nào nếu tài khoản admin bị hack?<span class="plus">+</span></summary>
+        <div class="faq-a">GuardPro theo dõi tần suất hành động nhạy cảm (xoá kênh, ban hàng loạt, tạo webhook lạ...) và tự động khoá quyền, revoke role khi vượt ngưỡng cấu hình — kể cả khi hành động đến từ một tài khoản có quyền admin.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Có thể tắt riêng từng module không?<span class="plus">+</span></summary>
+        <div class="faq-a">Có. Mỗi module (Guard, Nhạc, Kinh tế, Ticket, Toà án...) hoạt động độc lập và bật/tắt riêng qua lệnh cấu hình, không ảnh hưởng các module khác.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Chuyển từ bot khác sang GuardPro có mất dữ liệu không?<span class="plus">+</span></summary>
+        <div class="faq-a">Dữ liệu như level, kinh tế của bot cũ không tự động chuyển được vì mỗi bot lưu theo hệ thống riêng. Cấu hình mới (rule, role, kênh) cần thiết lập lại trong GuardPro.</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap" style="text-align:center;">
+    <div class="section-head reveal" style="margin:0 auto 10px; text-align:center;">
+      <div class="section-tag">// Status</div>
+      <h2>Đang quét server của bạn.</h2>
+    </div>
+    <div class="radar-wrap">
+      <div class="radar">
+        <div class="sweep"></div>
+        <div class="blip" style="top:38%; left:64%; animation-delay:0s;"></div>
+        <div class="blip" style="top:58%; left:30%; animation-delay:1.1s;"></div>
+        <div class="blip" style="top:24%; left:42%; animation-delay:2.2s;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <div class="brand" style="margin-bottom:10px;"><span class="dot"></span>GUARDPRO</div>
+        <p style="color:var(--muted); font-size:14px; max-width:280px;">Bot bảo vệ, quản lý và giữ lửa cho server Discord của bạn — hoạt động 24/7.</p>
+      </div>
+      <div>
+        <h4>Sản phẩm</h4>
+        <ul>
+          <li><a href="#modules">Tính năng</a></li>
+          <li><a href="#commands">Danh sách lệnh</a></li>
+          <li><a href="#" id="invite-link-foot">Mời bot</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Cộng đồng</h4>
+        <ul>
+          <li><a href="#" id="support-link-foot">Support Server</a></li>
+          <li><a href="#">Cập nhật / Changelog</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Pháp lý</h4>
+        <ul>
+          <li><a href="#privacy">Privacy Policy</a></li>
+          <li><a href="#tos">Điều khoản dịch vụ</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 GuardPro. Không liên kết với Discord Inc.</span>
+      <span>made with !guard on</span>
+    </div>
+  </div>
+</footer>
+
+<section id="privacy">
+  <div class="wrap legal">
+    <div class="section-tag">// Legal</div>
+    <h2>Privacy Policy</h2>
+    <p>Cập nhật lần cuối: [điền ngày]</p>
+    <h3>1. Dữ liệu chúng tôi thu thập</h3>
+    <p>GuardPro lưu trữ tối thiểu dữ liệu cần thiết để vận hành: ID server, ID người dùng, cấu hình bật/tắt tính năng, dữ liệu kinh tế/level nội bộ, danh sách whitelist/blacklist do quản trị viên thiết lập.</p>
+    <h3>2. Nội dung tin nhắn</h3>
+    <p>Bot đọc nội dung tin nhắn để phục vụ các tính năng antilink, autoresponder, lọc từ cấm. Nội dung tin nhắn không được lưu trữ lâu dài trừ khi cần thiết cho log kiểm duyệt.</p>
+    <h3>3. Chia sẻ dữ liệu</h3>
+    <p>Chúng tôi không bán hoặc chia sẻ dữ liệu người dùng cho bên thứ ba ngoài mục đích vận hành bot.</p>
+    <h3>4. Quyền của bạn</h3>
+    <p>Quản trị viên server có thể yêu cầu xoá toàn bộ dữ liệu liên quan đến server bằng cách liên hệ qua Support Server.</p>
+    <span class="edit-flag">⚠ Đây là bản mẫu — hãy chỉnh sửa cho đúng thực tế trước khi dùng để xin verify app.</span>
+  </div>
+</section>
+
+<section id="tos">
+  <div class="wrap legal">
+    <div class="section-tag">// Legal</div>
+    <h2>Điều khoản dịch vụ</h2>
+    <p>Cập nhật lần cuối: [điền ngày]</p>
+    <h3>1. Chấp nhận điều khoản</h3>
+    <p>Bằng việc mời và sử dụng GuardPro, quản trị viên server đồng ý với các điều khoản dưới đây.</p>
+    <h3>2. Sử dụng hợp lệ</h3>
+    <ul>
+      <li>Không dùng bot để spam, quấy rối, hoặc vi phạm Điều khoản dịch vụ của Discord.</li>
+      <li>Không khai thác lỗi bot để trục lợi hoặc gây hại cho server khác.</li>
+    </ul>
+    <h3>3. Giới hạn trách nhiệm</h3>
+    <p>GuardPro được cung cấp "nguyên trạng", không đảm bảo hoạt động không gián đoạn 100%. Chúng tôi không chịu trách nhiệm cho thiệt hại phát sinh từ việc cấu hình sai hoặc sự cố ngoài ý muốn.</p>
+    <h3>4. Chấm dứt</h3>
+    <p>Chúng tôi có quyền từ chối phục vụ hoặc rời server nếu phát hiện vi phạm điều khoản.</p>
+    <span class="edit-flag">⚠ Đây là bản mẫu — hãy chỉnh sửa cho đúng thực tế trước khi dùng để xin verify app.</span>
+  </div>
+</section>
+
+<script>
+  // ---- EDIT THESE LINKS ----
+  const INVITE_URL = "#"; // dán link OAuth2 invite từ Discord Developer Portal
+  const SUPPORT_URL = "#"; // dán link invite Discord support server
+  document.querySelectorAll('#invite-link-nav,#invite-link-hero,#invite-link-foot,.invite-target').forEach(el => el.href = INVITE_URL);
+  document.querySelectorAll('#support-link,#support-link-foot,#support-link-pricing,#support-link-pricing-2').forEach(el => el.href = SUPPORT_URL);
+
+  // Mobile nav toggle
+  const burger = document.getElementById('burger');
+  const navlinks = document.getElementById('navlinks');
+  burger.addEventListener('click', () => {
+    const open = navlinks.classList.toggle('mobile-open');
+    burger.closest('header').classList.toggle('nav-open', open);
+    burger.setAttribute('aria-expanded', open);
+  });
+  navlinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    navlinks.classList.remove('mobile-open');
+    burger.closest('header').classList.remove('nav-open');
+    burger.setAttribute('aria-expanded', false);
+  }));
+
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    revealEls.forEach(el => io.observe(el));
+  } else {
+    revealEls.forEach(el => el.classList.add('in'));
+  }
+
+  // ---- EDIT THESE STATS ----
+  document.getElementById('stat-servers').textContent = '1+';
+  document.getElementById('stat-users').textContent = '100+';
+
+  // Boot log animation
+  const bootLines = [
+    { text: '&gt; Đang khởi động GuardPro...', cls: 'tag' },
+    { text: '&gt; Antinuke ............... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Anti-raid / Anti-spam ... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Kinh tế / Level ......... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Nhạc (Lavalink) ......... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Ticket / Application .... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Toà án nội bộ ........... <span class="ok">ONLINE</span>', cls: '' },
+    { text: '&gt; Sẵn sàng bảo vệ server của bạn.', cls: 'tag' },
+  ];
+  const logEl = document.getElementById('boot-log');
+  function renderBoot(){
+    logEl.innerHTML = '';
+    bootLines.forEach((l, i) => {
+      const div = document.createElement('div');
+      div.className = 'line ' + l.cls;
+      div.style.animationDelay = (i * 0.28) + 's';
+      div.innerHTML = l.text;
+      logEl.appendChild(div);
+    });
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+    cursor.style.opacity = 0;
+    cursor.style.animation = 'appear .2s forwards ' + (bootLines.length * 0.28) + 's, blink 1s step-end infinite ' + (bootLines.length * 0.28) + 's';
+    logEl.appendChild(cursor);
+  }
+  renderBoot();
+
+  // Respect reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.querySelectorAll('.sweep, .blip, .dot').forEach(el => el.style.animation = 'none');
+    document.querySelectorAll('.line').forEach(el => { el.style.animation = 'none'; el.style.opacity = 1; });
+    document.querySelectorAll('.reveal').forEach(el => { el.style.transition = 'none'; el.classList.add('in'); });
+  }
+</script>
+
+</body>
+</html>
